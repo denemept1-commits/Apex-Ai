@@ -860,7 +860,7 @@ function closeSidebar(){$('chat-sidebar').classList.remove('open');$('sidebar-ov
 async function callApex(userMsg,sysOverride){
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json'/* ,'x-api-key':'AQ.Ab8RN6L8gHgtV06SsOjwv4nMrj7Nc7Qc5Oj_y36OznvrYGA11Q' */},
+    headers:{'Content-Type':'application/json'/* ,'x-api-key':'AIzaSyBH9iYnRKjdWpWITRMjJK5FQnU1BY3-30Y' */},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,system:sysOverride||SYS,messages:[{role:'user',content:userMsg}]})
   });
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API Error');}
