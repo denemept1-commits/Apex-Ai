@@ -857,7 +857,7 @@ function openSidebar(){$('chat-sidebar').classList.add('open');$('sidebar-ov').c
 function closeSidebar(){$('chat-sidebar').classList.remove('open');$('sidebar-ov').classList.remove('open');}
 
 // ─── GEMINI API ───
-const GEMINI_KEY='BURAYA_KEY_YAZ';
+const GEMINI_KEY='AIzaSyArwUyu3wNPqxBQQUG-BFRme8-pS04CgPM';
 async function callApex(userMsg,sysOverride){
   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,{
     method:'POST',
