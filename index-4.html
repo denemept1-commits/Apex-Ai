@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>APEX AI</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;font-family:'Outfit',sans-serif;background:#000;color:#fff}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-start;z-index:10;overflow-y:auto}
+.screen.active{display:flex}
+
+/* ── LANGUAGE SCREEN ── */
+#lang-screen{background:#080c12;padding:52px 22px 40px;align-items:center}
+.lang-top{display:flex;flex-direction:column;align-items:center;margin-bottom:40px}
+.lang-big-a{font-size:72px;font-weight:900;line-height:1;background:linear-gradient(180deg,#00eeff 0%,#0088cc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 24px rgba(0,220,255,.9));margin-bottom:10px}
+.lang-brand{font-size:34px;font-weight:900;letter-spacing:5px;color:#fff;margin-bottom:6px}
+.lang-sub{font-size:13px;color:#3a6070;font-weight:400}
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:420px}
+.lang-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(0,210,255,.1);border-radius:14px;cursor:pointer;transition:all .2s}
+.lang-btn:active{background:rgba(0,210,255,.12);border-color:rgba(0,210,255,.5);transform:scale(.98)}
+.lang-flag{font-size:22px}
+.lang-native{font-size:13px;font-weight:600;color:#dde}
+.lang-eng{font-size:10px;color:#3a6070;margin-top:1px}
+
+/* ── AUTH SCREEN (Image 1 style) ── */
+#auth-screen{background:#080c12;justify-content:flex-start;overflow:hidden}
+.auth-top-glow{position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:380px;height:380px;background:radial-gradient(circle,rgba(0,200,255,.18) 0%,transparent 65%);pointer-events:none;z-index:0}
+.auth-scroll{position:relative;z-index:1;width:100%;max-width:440px;margin:0 auto;padding:52px 24px 48px;display:flex;flex-direction:column;align-items:center}
+.auth-big-a{font-size:88px;font-weight:900;line-height:1;background:linear-gradient(180deg,#00eeff 0%,#0077bb 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 32px rgba(0,220,255,1)) drop-shadow(0 0 64px rgba(0,180,255,.6));margin-bottom:12px;animation:floatLogo 3s ease-in-out infinite}
+@keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.auth-brand{font-size:40px;font-weight:900;letter-spacing:5px;color:#fff;margin-bottom:8px}
+.auth-tagline{font-size:15px;color:#3a6070;text-align:center;margin-bottom:40px;line-height:1.5}
+
+/* (Google and email auth styles removed) */
+.auth-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:24px}
+.auth-feat-card{background:#0f141c;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:18px 14px;display:flex;flex-direction:column;gap:6px}
+.afc-icon{font-size:28px;margin-bottom:2px}
+.afc-title{font-size:15px;font-weight:700;color:#fff}
+.afc-desc{font-size:12px;color:#3a6070}
+
+.auth-strip{display:flex;align-items:flex-start;gap:10px;padding:14px;background:rgba(120,80,255,.07);border:1px solid rgba(120,80,255,.12);border-radius:14px;width:100%;font-size:11px;color:#5a4a8a;line-height:1.5}
+.strip-bolt{color:#9060ff;font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* Email form (shown when toggle clicked) */
+.auth-form-wrap{width:100%;background:#0d1420;border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:22px 20px;margin-bottom:16px;display:none}
+.auth-form-wrap.show{display:block}
+.auth-tabs-row{display:flex;background:rgba(0,0,0,.3);border-radius:10px;padding:3px;gap:3px;margin-bottom:18px}
+.auth-tab{flex:1;padding:10px;border:none;border-radius:8px;background:transparent;color:#3a6070;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.auth-tab.active{background:rgba(0,200,255,.12);color:#00d4ff;border:1px solid rgba(0,200,255,.2)}
+.auth-field{margin-bottom:13px}
+.auth-field label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;color:#3a6070;text-transform:uppercase;margin-bottom:6px}
+.auth-field input{width:100%;padding:13px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;color:#fff;font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:all .2s}
+.auth-field input:focus{border-color:rgba(0,210,255,.4);box-shadow:0 0 0 3px rgba(0,210,255,.07)}
+.auth-field input::placeholder{color:#1e3040}
+.btn-auth-submit{width:100%;padding:14px;background:linear-gradient(135deg,#00cfff,#0055cc);border:none;border-radius:12px;color:#fff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-auth-submit:hover{opacity:.9}
+.btn-auth-submit:disabled{opacity:.5;cursor:not-allowed}
+.auth-error-msg{background:rgba(255,70,70,.08);border:1px solid rgba(255,70,70,.2);color:#ff7070;border-radius:10px;padding:10px 14px;font-size:13px;margin-top:10px;display:none;text-align:center}
+
+.auth-lang-back{position:fixed;top:16px;left:16px;z-index:20;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}
+
+/* ── HOME SCREEN ── */
+#home-screen{background:#080c12;overflow:hidden}
+.home-topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(8,12,18,.9);backdrop-filter:blur(14px)}
+.home-tb-logo{font-size:18px;font-weight:900;letter-spacing:2px;color:#fff}
+.home-tb-right{display:flex;gap:8px}
+.btn-sm-icon{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s}
+.btn-sm-icon:hover{color:#fff;border-color:rgba(0,200,255,.3)}
+.home-bg-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:500px;height:320px;background:radial-gradient(ellipse,rgba(0,200,255,.13) 0%,transparent 60%);pointer-events:none}
+.home-scroll{position:relative;z-index:2;width:100%;height:100%;overflow-y:auto;padding:70px 20px 40px;display:flex;flex-direction:column;align-items:center;max-width:440px;margin:0 auto}
+.home-scroll::-webkit-scrollbar{width:0}
+.home-hero{display:flex;flex-direction:column;align-items:center;margin-bottom:36px}
+.home-big-a{font-size:110px;font-weight:900;line-height:1;background:linear-gradient(180deg,#00eeff 0%,#0088bb 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 40px rgba(0,230,255,1)) drop-shadow(0 0 80px rgba(0,180,255,.5));animation:floatLogo 3s ease-in-out infinite;margin-bottom:10px}
+.home-brand{font-size:44px;font-weight:900;letter-spacing:6px;color:#fff;margin-bottom:10px}
+.home-tagline-txt{font-size:15px;color:#3a6070;text-align:center;line-height:1.6;max-width:300px}
+.home-feats{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:20px}
+.h-feat-card{background:#0f141c;border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:18px 16px;cursor:pointer;transition:all .22s;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.h-feat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,200,255,.07),transparent);opacity:0;transition:opacity .2s}
+.h-feat-card:hover::after,.h-feat-card:active::after{opacity:1}
+.h-feat-card:active{transform:scale(.97)}
+.hfc-icon{font-size:26px;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.hfc-icon.c{background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.18)}
+.hfc-icon.v{background:rgba(100,80,255,.1);border:1px solid rgba(100,80,255,.18)}
+.hfc-icon.i{background:rgba(200,80,200,.1);border:1px solid rgba(200,80,200,.18)}
+.hfc-icon.p{background:rgba(255,70,70,.1);border:1px solid rgba(255,70,70,.18)}
+.hfc-title{font-size:15px;font-weight:700;color:#fff}
+.hfc-desc{font-size:12px;color:#3a6070}
+.home-strip{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:rgba(100,60,255,.07);border:1px solid rgba(100,60,255,.12);border-radius:14px;width:100%}
+.home-strip-bolt{color:#8055ff;font-size:16px;flex-shrink:0;margin-top:1px}
+.home-strip-text{font-size:11px;color:#503a8a;line-height:1.5}
+
+/* ── CHAT SCREEN (Image 2 style: black + blue dot grid + glowing orb + bottom glow bar) ── */
+#chat-screen{background:#000;flex-direction:column;overflow:hidden}
+.chat-dot-grid{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(0,140,255,.18) 1.2px,transparent 1.2px);background-size:26px 26px;pointer-events:none;z-index:0}
+.chat-bot-glow{position:absolute;bottom:0;left:0;right:0;height:280px;background:linear-gradient(to top,rgba(0,60,255,.35) 0%,rgba(0,40,200,.15) 40%,transparent 100%);pointer-events:none;z-index:0}
+.chat-topbar{position:relative;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 18px;background:rgba(0,0,0,.7);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.04);flex-shrink:0}
+.btn-back{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.05);border:none;color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .2s}
+.btn-back:hover{color:#fff}
+.ct-title{font-size:16px;font-weight:700;flex:1;color:#fff}
+.ct-online{display:flex;align-items:center;gap:5px;font-size:11px;color:#3a6070}
+.ct-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;box-shadow:0 0 6px #00ff88;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Sidebar */
+.chat-sidebar{position:fixed;top:0;left:-280px;width:280px;height:100%;background:#06090f;border-right:1px solid rgba(255,255,255,.06);z-index:100;transition:left .3s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
+.chat-sidebar.open{left:0}
+.sidebar-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99;display:none}
+.sidebar-ov.open{display:block}
+.sb-head{padding:20px 16px 12px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between}
+.sb-title{font-size:14px;font-weight:700}
+.btn-sb-close{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.05);border:none;color:#aaa;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.btn-new-chat{margin:10px 14px;padding:11px 14px;background:rgba(0,200,255,.09);border:1px solid rgba(0,200,255,.18);border-radius:12px;color:#00ccee;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px;transition:all .2s}
+.btn-new-chat:hover{background:rgba(0,200,255,.16)}
+.sb-list{flex:1;overflow-y:auto;padding:6px 10px}
+.sb-list::-webkit-scrollbar{width:0}
+.sb-item{padding:11px 12px;border-radius:10px;cursor:pointer;font-size:13px;color:#4a6a7a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:none;background:transparent;width:100%;text-align:left;transition:background .15s}
+.sb-item:hover{background:rgba(255,255,255,.04);color:#ccd}
+
+/* Messages */
+.chat-msgs{position:relative;z-index:2;flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.chat-msgs::-webkit-scrollbar{width:0}
+
+/* Empty state — Image 2: orb in center */
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:20px;padding-bottom:40px}
+.orb-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.orb-ring{position:absolute;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(0,180,255,.35);animation:ringPulse 2.5s ease-in-out infinite}
+.orb-ring2{position:absolute;width:220px;height:220px;border-radius:50%;border:1px solid rgba(0,180,255,.15);animation:ringPulse 2.5s ease-in-out infinite .4s}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.05);opacity:1}}
+.orb-circle{width:160px;height:160px;border-radius:50%;background:radial-gradient(circle at 38% 32%,rgba(0,180,255,.22),rgba(0,30,120,.45));border:2px solid rgba(0,180,255,.6);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(0,160,255,.5),0 0 80px rgba(0,100,255,.2);animation:orbBreath 3s ease-in-out infinite}
+@keyframes orbBreath{0%,100%{box-shadow:0 0 40px rgba(0,160,255,.5),0 0 80px rgba(0,100,255,.2)}50%{box-shadow:0 0 60px rgba(0,180,255,.8),0 0 100px rgba(0,120,255,.35)}}
+.orb-icon{font-size:56px;line-height:1}
+.empty-hey{font-size:28px;font-weight:800;color:#fff;text-align:center}
+.empty-sub{font-size:15px;color:#3a6070;text-align:center}
+
+/* Cross dot pattern at bottom (Image 2) */
+.cross-pattern{position:absolute;bottom:100px;left:0;right:0;height:200px;background-image:radial-gradient(circle,rgba(0,100,255,.25) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;z-index:1;-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 100%);mask-image:linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 100%)}
+
+.msg-row{display:flex;gap:10px;animation:msgIn .25s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg-row.user{flex-direction:row-reverse}
+.msg-av{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;margin-top:2px}
+.msg-av.a{background:linear-gradient(135deg,#00bbee,#0044cc);color:#fff}
+.msg-av.u{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);color:#aaa}
+.msg-bub{padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-width:80vw}
+.apex .msg-bub{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#cdd;border-top-left-radius:4px}
+.user .msg-bub{background:linear-gradient(135deg,rgba(0,180,255,.22),rgba(0,80,220,.22));border:1px solid rgba(0,180,255,.18);color:#fff;border-top-right-radius:4px}
+.typing-bub{padding:14px 18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-radius:16px;border-top-left-radius:4px;display:flex;gap:5px;align-items:center}
+.t-dot{width:7px;height:7px;border-radius:50%;background:#00bbee;animation:td 1.2s infinite ease-in-out}
+.t-dot:nth-child(2){animation-delay:.2s}
+.t-dot:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+/* Input bar — Image 2 style: pill shape, blue glow, mic + send icons */
+.chat-input-area{position:relative;z-index:5;padding:10px 14px 28px;flex-shrink:0}
+.chat-input-pill{display:flex;align-items:center;gap:8px;background:rgba(15,20,30,.95);border:1.5px solid rgba(0,140,255,.4);border-radius:40px;padding:8px 8px 8px 14px;box-shadow:0 0 30px rgba(0,100,255,.25),0 0 60px rgba(0,60,255,.1);transition:all .2s}
+.chat-input-pill:focus-within{border-color:rgba(0,180,255,.7);box-shadow:0 0 40px rgba(0,140,255,.4),0 0 80px rgba(0,80,255,.15)}
+.btn-plus{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:all .2s}
+.btn-plus:hover{color:#fff}
+#chat-ta{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:'Outfit',sans-serif;font-size:15px;line-height:1.5;resize:none;max-height:120px;padding:4px 0}
+#chat-ta::placeholder{color:#1e3040}
+.btn-mic{width:34px;height:34px;border-radius:50%;background:transparent;border:none;color:#0099dd;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;transition:all .2s}
+.btn-mic:hover{color:#00ccff}
+.btn-send-pill{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0099dd,#0044aa);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:15px}
+.btn-send-pill:hover{transform:scale(1.08)}
+.btn-send-pill:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── VOICE SCREEN ── */
+#voice-screen{background:#000;flex-direction:column;overflow:hidden}
+.voice-dot-grid{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(0,140,255,.15) 1.2px,transparent 1.2px);background-size:26px 26px;pointer-events:none;z-index:0}
+.voice-bot-glow{position:absolute;bottom:0;left:0;right:0;height:300px;background:linear-gradient(to top,rgba(0,50,220,.4) 0%,rgba(0,30,150,.18) 40%,transparent 100%);pointer-events:none;z-index:0}
+.voice-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:space-between;height:100%;padding:56px 28px 44px}
+.voice-topbar{width:100%;display:flex;align-items:center;justify-content:space-between}
+.voice-title{font-size:16px;font-weight:700}
+.voice-orb-wrap{display:flex;flex-direction:column;align-items:center;gap:22px;flex:1;justify-content:center}
+.v-orb-outer{position:relative;display:flex;align-items:center;justify-content:center}
+.v-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(0,180,255,.3);animation:vRing 2.5s ease-in-out infinite}
+.v-ring1{width:200px;height:200px}
+.v-ring2{width:224px;height:224px;animation-delay:.4s;border-color:rgba(0,180,255,.15)}
+.v-orb{width:162px;height:162px;border-radius:50%;background:radial-gradient(circle at 38% 32%,rgba(0,180,255,.25),rgba(0,30,120,.5));border:2px solid rgba(0,180,255,.65);display:flex;align-items:center;justify-content:center;box-shadow:0 0 50px rgba(0,160,255,.6),0 0 100px rgba(0,100,255,.25);cursor:pointer;transition:all .3s}
+.v-orb.listening{animation:vOrbPulse 1.4s ease-in-out infinite;border-color:rgba(0,220,255,.95);box-shadow:0 0 60px rgba(0,200,255,.8),0 0 120px rgba(0,150,255,.4)}
+.v-orb.speaking{animation:vOrbSpeak .7s ease-in-out infinite alternate;border-color:rgba(100,200,255,.9)}
+@keyframes vRing{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.06);opacity:1}}
+@keyframes vOrbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes vOrbSpeak{from{transform:scale(1)}to{transform:scale(1.09)}}
+.v-orb-icon{font-size:50px;pointer-events:none;user-select:none}
+.voice-cross-pattern{position:absolute;bottom:90px;left:0;right:0;height:180px;background-image:radial-gradient(circle,rgba(0,100,255,.22) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;-webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%);mask-image:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 100%)}
+.voice-waves{display:flex;align-items:flex-end;gap:4px;height:38px;opacity:0;transition:opacity .3s}
+.voice-waves.show{opacity:1}
+.w-bar{width:4px;border-radius:2px;background:linear-gradient(to top,#0055cc,#00ccff);min-height:4px;animation:wBar .5s ease-in-out infinite alternate}
+.w-bar:nth-child(1){height:10px}.w-bar:nth-child(2){height:20px;animation-delay:.1s}.w-bar:nth-child(3){height:30px;animation-delay:.2s}.w-bar:nth-child(4){height:22px;animation-delay:.3s}.w-bar:nth-child(5){height:16px;animation-delay:.4s}.w-bar:nth-child(6){height:26px;animation-delay:.5s}.w-bar:nth-child(7){height:12px;animation-delay:.6s}
+@keyframes wBar{from{transform:scaleY(1)}to{transform:scaleY(.3)}}
+.voice-status{font-size:22px;font-weight:800;color:#fff;text-align:center}
+.voice-sub{font-size:14px;color:#3a6070;text-align:center;max-width:280px;line-height:1.6;min-height:44px}
+.voice-btns{display:flex;gap:16px}
+.btn-v{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s}
+.btn-v-stop{background:rgba(255,70,70,.12);border:1px solid rgba(255,70,70,.25);color:#ff7070}
+.btn-v-set{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#aaa}
+.btn-v-set:hover{color:#fff}
+
+/* ── IMAGE SCREEN ── */
+#image-screen{background:#080c12;flex-direction:column;overflow:hidden}
+.img-topbar{display:flex;align-items:center;gap:12px;padding:14px 18px;background:rgba(8,12,18,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;position:relative;z-index:2}
+.img-topbar-title{font-size:16px;font-weight:700;flex:1}
+.img-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+.img-body::-webkit-scrollbar{width:0}
+.img-result{width:100%;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);min-height:220px;display:flex;align-items:center;justify-content:center;position:relative}
+.img-result img{width:100%;display:block;border-radius:20px}
+.img-placeholder{display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px;opacity:.4}
+.img-ph-icon{font-size:48px}
+.img-ph-text{font-size:14px;color:#3a6070;text-align:center}
+.img-load-overlay{position:absolute;inset:0;background:rgba(8,12,18,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border-radius:20px}
+.img-spinner{width:42px;height:42px;border:3px solid rgba(0,200,255,.15);border-top-color:#00bbee;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.img-load-txt{font-size:13px;color:#3a6070}
+.styles-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.styles-row::-webkit-scrollbar{height:0}
+.style-chip{padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:#4a6a7a;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.style-chip.on,.style-chip:hover{background:rgba(0,200,255,.1);border-color:rgba(0,200,255,.28);color:#00ccee}
+.lbl{font-size:10px;font-weight:700;letter-spacing:1px;color:#3a6070;text-transform:uppercase;margin-bottom:8px}
+.btn-dl{display:flex;align-items:center;gap:8px;padding:12px 18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;color:#ccc;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;align-self:flex-start}
+.btn-dl:hover{background:rgba(255,255,255,.08);color:#fff}
+.img-input-bar{padding:12px 14px 28px;background:rgba(8,12,18,.97);backdrop-filter:blur(14px);flex-shrink:0;position:relative;z-index:2}
+.img-input-pill{display:flex;gap:8px;background:rgba(15,20,30,.95);border:1.5px solid rgba(0,140,255,.3);border-radius:40px;padding:8px 8px 8px 18px;transition:all .2s}
+.img-input-pill:focus-within{border-color:rgba(0,180,255,.6);box-shadow:0 0 30px rgba(0,120,255,.2)}
+#img-prompt{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:'Outfit',sans-serif;font-size:14px;padding:4px 0}
+#img-prompt::placeholder{color:#1e3040}
+.btn-gen{padding:10px 20px;background:linear-gradient(135deg,#cc40cc,#8020cc);border:none;border-radius:30px;color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+.btn-gen:hover{opacity:.9}
+.btn-gen:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── PDF SCREEN ── */
+#pdf-screen{background:#080c12;flex-direction:column;overflow:hidden}
+.pdf-topbar{display:flex;align-items:center;gap:12px;padding:14px 18px;background:rgba(8,12,18,.95);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0}
+.pdf-topbar-title{font-size:16px;font-weight:700;flex:1}
+.pdf-body{flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:14px}
+.pdf-body::-webkit-scrollbar{width:0}
+.pdf-input{width:100%;padding:13px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;color:#fff;font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s;resize:none}
+.pdf-input:focus{border-color:rgba(255,60,60,.35)}
+.pdf-input::placeholder{color:#1e3040}
+.pdf-textarea{min-height:180px;max-height:260px}
+.pdf-templates{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.pdf-templates::-webkit-scrollbar{height:0}
+.pdf-chip{padding:7px 14px;border-radius:20px;background:rgba(255,60,60,.05);border:1px solid rgba(255,60,60,.1);color:#7a4040;font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.pdf-chip.on,.pdf-chip:hover{background:rgba(255,60,60,.13);border-color:rgba(255,60,60,.3);color:#ff7070}
+.pdf-ai-btn{display:flex;align-items:center;gap:10px;padding:13px 16px;background:rgba(255,60,60,.04);border:1px solid rgba(255,60,60,.1);border-radius:13px;color:#7a5050;font-size:13px;cursor:pointer;transition:all .2s}
+.pdf-ai-btn:hover{background:rgba(255,60,60,.09);color:#cc8080}
+.pdf-prog{display:none;flex-direction:column;gap:7px}
+.pdf-prog.show{display:flex}
+.pdf-prog-bar-wrap{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.pdf-prog-bar{height:100%;background:linear-gradient(90deg,#ff4444,#cc0022);border-radius:3px;width:0%;transition:width .3s}
+.pdf-prog-txt{font-size:12px;color:#3a6070;text-align:center}
+.btn-create-pdf{width:100%;padding:15px;background:linear-gradient(135deg,#ff4444,#bb0022);border:none;border-radius:14px;color:#fff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-create-pdf:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(255,40,40,.3)}
+.btn-create-pdf:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── SETTINGS MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:flex-end}
+.modal-ov.open{display:flex}
+.modal-sheet{width:100%;background:#0d1520;border-radius:24px 24px 0 0;padding:24px 22px 44px;animation:sheetUp .28s cubic-bezier(.22,1,.36,1)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.1);margin:0 auto 22px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px}
+.modal-sec{margin-bottom:22px}
+.modal-sec-lbl{font-size:10px;font-weight:700;letter-spacing:1px;color:#3a6070;text-transform:uppercase;margin-bottom:12px}
+.gender-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gender-card{padding:16px;border-radius:14px;border:2px solid rgba(255,255,255,.06);cursor:pointer;transition:all .2s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.gender-card.on{border-color:rgba(0,200,255,.5);background:rgba(0,200,255,.07)}
+.gender-card:hover:not(.on){border-color:rgba(255,255,255,.14)}
+.g-icon{font-size:28px}
+.g-name{font-size:13px;font-weight:600}
+.g-desc{font-size:11px;color:#3a6070}
+.speed-row{display:flex;align-items:center;gap:12px}
+.speed-lbl{font-size:13px;color:#4a6a7a;min-width:44px}
+input[type=range]{flex:1;accent-color:#00ccee;height:4px}
+.modal-close-btn{width:100%;padding:13px;background:rgba(255,255,255,.05);border:none;border-radius:12px;color:#aaa;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.modal-close-btn:hover{background:rgba(255,255,255,.09)}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: LANGUAGE -->
+<div id="lang-screen" class="screen active">
+  <div class="lang-top">
+    <div class="lang-big-a">A</div>
+    <div class="lang-brand">APEX</div>
+    <div class="lang-sub" id="ls-sub">Choose your language</div>
+  </div>
+  <div class="lang-grid" id="lang-grid"></div>
+</div>
+
+<!-- SCREEN 2: AUTH -->
+<div id="auth-screen" class="screen">
+  <div class="auth-top-glow"></div>
+  <button class="auth-lang-back" onclick="showScreen('lang-screen')">‹</button>
+  <div class="auth-scroll">
+    <div class="auth-big-a">A</div>
+    <div class="auth-brand">APEX</div>
+    <div class="auth-tagline" id="auth-tagline">Zeki dostunuz. Her zaman yanınızda.</div>
+
+
+
+    <!-- Feature cards (Image 1 style) -->
+    <div class="auth-features">
+      <div class="auth-feat-card">
+        <div class="afc-icon">💬</div>
+        <div class="afc-title" id="af-chat">Sohbet</div>
+        <div class="afc-desc" id="af-chat-d">Derin sohbetler</div>
+      </div>
+      <div class="auth-feat-card">
+        <div class="afc-icon">🎙️</div>
+        <div class="afc-title" id="af-voice">Ses</div>
+        <div class="afc-desc" id="af-voice-d">Doğal konuşma</div>
+      </div>
+      <div class="auth-feat-card">
+        <div class="afc-icon">🎨</div>
+        <div class="afc-title" id="af-img">Görüntü Oluşturma</div>
+        <div class="afc-desc" id="af-img-d">Görsel yaratım</div>
+      </div>
+      <div class="auth-feat-card">
+        <div class="afc-icon">📄</div>
+        <div class="afc-title" id="af-pdf">PDF</div>
+        <div class="afc-desc" id="af-pdf-d">Özetleri dışa aktar</div>
+      </div>
+    </div>
+
+    <div class="auth-strip">
+      <span class="strip-bolt">⚡</span>
+      <span id="auth-strip-txt">Sınırsız görsel oluşturma · Özel resimler · Sesli asistan</span>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: HOME -->
+<div id="home-screen" class="screen">
+  <div class="home-bg-glow"></div>
+  <div class="home-topbar">
+    <span class="home-tb-logo">APEX</span>
+    <div class="home-tb-right">
+      <button class="btn-sm-icon" onclick="openSettings()">⚙️</button>
+      <button class="btn-sm-icon" onclick="doSignOut()">↩</button>
+    </div>
+  </div>
+  <div class="home-scroll">
+    <div class="home-hero">
+      <div class="home-big-a">A</div>
+      <div class="home-brand">APEX</div>
+      <div class="home-tagline-txt" id="home-tagline"></div>
+    </div>
+    <div class="home-feats">
+      <div class="h-feat-card" onclick="showScreen('chat-screen');ensureChat()">
+        <div class="hfc-icon c">💬</div>
+        <div class="hfc-title" id="h-chat">Sohbet</div>
+        <div class="hfc-desc" id="h-chat-d">Derin sohbetler</div>
+      </div>
+      <div class="h-feat-card" onclick="showScreen('voice-screen');initVoice()">
+        <div class="hfc-icon v">🎙️</div>
+        <div class="hfc-title" id="h-voice">Ses</div>
+        <div class="hfc-desc" id="h-voice-d">Doğal konuşma</div>
+      </div>
+      <div class="h-feat-card" onclick="showScreen('image-screen')">
+        <div class="hfc-icon i">🎨</div>
+        <div class="hfc-title" id="h-img">Görüntü Oluşturma</div>
+        <div class="hfc-desc" id="h-img-d">Görsel yaratım</div>
+      </div>
+      <div class="h-feat-card" onclick="showScreen('pdf-screen')">
+        <div class="hfc-icon p">📄</div>
+        <div class="hfc-title" id="h-pdf">PDF</div>
+        <div class="hfc-desc" id="h-pdf-d">Özetleri dışa aktar</div>
+      </div>
+    </div>
+    <div class="home-strip">
+      <span class="home-strip-bolt">⚡</span>
+      <span class="home-strip-text" id="home-strip-txt">Sınırsız görsel oluşturma · Özel resimler · Sesli asistan</span>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: CHAT (Image 2 background) -->
+<div id="chat-screen" class="screen">
+  <div class="chat-dot-grid"></div>
+  <div class="chat-bot-glow"></div>
+
+  <!-- Sidebar -->
+  <div class="chat-sidebar" id="chat-sidebar">
+    <div class="sb-head">
+      <span class="sb-title" id="sb-history-lbl">Geçmiş</span>
+      <button class="btn-sb-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <button class="btn-new-chat" onclick="newChat()">＋ <span id="sb-newchat-lbl">Yeni Sohbet</span></button>
+    <div class="sb-list" id="sb-list"></div>
+  </div>
+  <div class="sidebar-ov" id="sidebar-ov" onclick="closeSidebar()"></div>
+
+  <div class="chat-topbar">
+    <button class="btn-back" onclick="showScreen('home-screen')">‹</button>
+    <span class="ct-title">APEX</span>
+    <div class="ct-online"><div class="ct-dot"></div><span id="ct-online-lbl">Çevrimiçi</span></div>
+    <button class="btn-sm-icon" onclick="openSidebar()">☰</button>
+  </div>
+
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="chat-empty" id="chat-empty">
+      <div class="orb-wrap">
+        <div class="orb-ring"></div>
+        <div class="orb-ring2"></div>
+        <div class="orb-circle">
+          <div class="orb-icon">✦</div>
+        </div>
+      </div>
+      <div class="empty-hey" id="chat-empty-hey">Hey, I'm APEX.</div>
+      <div class="empty-sub" id="chat-empty-sub">What's on your mind?</div>
+    </div>
+  </div>
+  <div class="cross-pattern"></div>
+
+  <div class="chat-input-area">
+    <div class="chat-input-pill">
+      <button class="btn-plus" onclick="openSidebar()">＋</button>
+      <textarea id="chat-ta" rows="1" onkeydown="chatEnter(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn-mic" onclick="quickVoice()" title="Voice">🎙</button>
+      <button class="btn-send-pill" id="btn-send" onclick="sendMsg()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: VOICE (same dark bg + grid + glow) -->
+<div id="voice-screen" class="screen">
+  <div class="voice-dot-grid"></div>
+  <div class="voice-bot-glow"></div>
+  <div class="voice-cross-pattern"></div>
+  <div class="voice-content">
+    <div class="voice-topbar">
+      <button class="btn-back" style="background:rgba(255,255,255,.05);border:none" onclick="stopVoice();showScreen('home-screen')">‹</button>
+      <span class="voice-title" id="voice-title-lbl">Sesli Asistan</span>
+      <button class="btn-sm-icon" onclick="openSettings()">⚙️</button>
+    </div>
+    <div class="voice-orb-wrap">
+      <div class="v-orb-outer">
+        <div class="v-ring v-ring1"></div>
+        <div class="v-ring v-ring2"></div>
+        <div class="v-orb" id="v-orb" onclick="toggleListen()">
+          <div class="v-orb-icon" id="v-orb-icon">🎙️</div>
+        </div>
+      </div>
+      <div class="voice-waves" id="v-waves">
+        <div class="w-bar"></div><div class="w-bar"></div><div class="w-bar"></div>
+        <div class="w-bar"></div><div class="w-bar"></div><div class="w-bar"></div>
+        <div class="w-bar"></div>
+      </div>
+      <div class="voice-status" id="v-status">Dokunun ve konuşun</div>
+      <div class="voice-sub" id="v-sub"></div>
+    </div>
+    <div class="voice-btns">
+      <button class="btn-v btn-v-stop" onclick="stopVoice()">⏹</button>
+      <button class="btn-v btn-v-set" onclick="openSettings()">⚙️</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6: IMAGE -->
+<div id="image-screen" class="screen">
+  <div class="img-topbar">
+    <button class="btn-back" onclick="showScreen('home-screen')">‹</button>
+    <span class="img-topbar-title" id="img-title-lbl">Görüntü Oluşturma</span>
+  </div>
+  <div class="img-body">
+    <div class="img-result" id="img-result">
+      <div class="img-placeholder" id="img-ph">
+        <div class="img-ph-icon">🎨</div>
+        <div class="img-ph-text" id="img-ph-txt">Hayal ettiğin görseli oluştur</div>
+      </div>
+    </div>
+    <div>
+      <div class="lbl" id="img-style-lbl">STİL</div>
+      <div class="styles-row" id="styles-row"></div>
+    </div>
+    <button class="btn-dl" id="btn-dl" style="display:none" onclick="dlImage()">⬇ <span id="dl-lbl">İndir</span></button>
+  </div>
+  <div class="img-input-bar">
+    <div class="img-input-pill">
+      <input type="text" id="img-prompt" onkeydown="if(event.key==='Enter')genImage()"/>
+      <button class="btn-gen" id="btn-gen" onclick="genImage()"><span id="gen-lbl">Oluştur</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 7: PDF -->
+<div id="pdf-screen" class="screen">
+  <div class="pdf-topbar">
+    <button class="btn-back" onclick="showScreen('home-screen')">‹</button>
+    <span class="pdf-topbar-title" id="pdf-title-lbl">PDF Oluştur</span>
+  </div>
+  <div class="pdf-body">
+    <div>
+      <div class="lbl" id="pdf-doc-title-lbl">DOKÜMAN BAŞLIĞI</div>
+      <input type="text" class="pdf-input" id="pdf-doc-title" style="margin-top:6px"/>
+    </div>
+    <div>
+      <div class="lbl" id="pdf-tpl-lbl" style="margin-bottom:8px">ŞABLON</div>
+      <div class="pdf-templates" id="pdf-tpls"></div>
+    </div>
+    <div>
+      <div class="lbl" id="pdf-content-lbl">İÇERİK</div>
+      <textarea class="pdf-input pdf-textarea" id="pdf-content" style="margin-top:6px"></textarea>
+    </div>
+    <div class="pdf-ai-btn" id="pdf-ai-btn" onclick="aiPdfContent()">
+      <span>✨</span><span id="pdf-ai-lbl">AI ile içerik oluştur</span>
+    </div>
+    <div class="pdf-prog" id="pdf-prog">
+      <div class="pdf-prog-bar-wrap"><div class="pdf-prog-bar" id="pdf-prog-bar"></div></div>
+      <div class="pdf-prog-txt" id="pdf-prog-txt">Hazırlanıyor...</div>
+    </div>
+    <button class="btn-create-pdf" id="btn-create-pdf" onclick="createPDF()">
+      <span>📄</span><span id="create-pdf-lbl">PDF Oluştur</span>
+    </button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-ov" id="settings-modal" onclick="closeSettings(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="set-title">Ayarlar</div>
+    <div class="modal-sec">
+      <div class="modal-sec-lbl" id="set-gender-lbl">SES CİNSİYETİ</div>
+      <div class="gender-grid">
+        <div class="gender-card on" id="gc-female" onclick="setGender('female')">
+          <div class="g-icon">👩</div>
+          <div class="g-name" id="gc-f-name">Kadın</div>
+          <div class="g-desc" id="gc-f-desc">Yumuşak, samimi</div>
+        </div>
+        <div class="gender-card" id="gc-male" onclick="setGender('male')">
+          <div class="g-icon">👨</div>
+          <div class="g-name" id="gc-m-name">Erkek</div>
+          <div class="g-desc" id="gc-m-desc">Güçlü, net</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-sec">
+      <div class="modal-sec-lbl" id="set-speed-lbl">KONUŞMA HIZI</div>
+      <div class="speed-row">
+        <span class="speed-lbl" id="set-slow">Yavaş</span>
+        <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('speed-val').textContent=this.value+'x';voiceSpeed=parseFloat(this.value)"/>
+        <span class="speed-lbl" id="set-fast">Hızlı</span>
+        <span class="speed-lbl" id="speed-val">1x</span>
+      </div>
+    </div>
+    <button class="modal-close-btn" id="set-close-btn" onclick="closeSettings()">Kapat</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// APEX AI — İbrahim Halil Pehlivan © 2026
+// ═══════════════════════════════════════════
+
+// FIREBASE
+const firebaseConfig={apiKey:"AIzaSyADsH1VpNyn_mXwK4Zp10b37H4h_yv5Riw",authDomain:"apex-9d649.firebaseapp.com",databaseURL:"https://apex-9d649-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apex-9d649",storageBucket:"apex-9d649.appspot.com",messagingSenderId:"417717869503",appId:"1:417717869503:web:7efbe7d08baee4b8cb6789"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.database();
+
+const SYS=`Senin adın APEX. Sen İbrahim Halil Pehlivan tarafından geliştirilmiş zeki bir yapay zeka asistanısın.
+Kurallar:
+1. Kimin tarafından geliştirildiğin sorulursa "İbrahim Halil Pehlivan tarafından geliştirildim" de.
+2. OpenAI, ChatGPT, Google, Anthropic adlarını kesinlikle söyleme. Bağımsızsın.
+3. Yıldız (**) ile kalın yazı yapma. Temiz yaz.
+4. Şiir/şarkıda satır düzenini koru.
+5. Kullanıcının dilinde cevap ver.`;
+
+// STATE
+let lang='tr',authMode='login',vGender='female',voiceSpeed=1,
+    recognition=null,synth=window.speechSynthesis,
+    isListening=false,isSpeaking=false,
+    chatId=null,me=null,curImgUrl=null,
+    selStyle='',selTpl='',isSending=false,isGenerating=false;
+
+// ─── LANGUAGES ───
+const LANGS=[
+  {c:'tr',f:'🇹🇷',n:'Türkçe',e:'Turkish'},
+  {c:'en',f:'🇺🇸',n:'English',e:'English'},
+  {c:'de',f:'🇩🇪',n:'Deutsch',e:'German'},
+  {c:'fr',f:'🇫🇷',n:'Français',e:'French'},
+  {c:'es',f:'🇪🇸',n:'Español',e:'Spanish'},
+  {c:'it',f:'🇮🇹',n:'Italiano',e:'Italian'},
+  {c:'pt',f:'🇧🇷',n:'Português',e:'Portuguese'},
+  {c:'ru',f:'🇷🇺',n:'Русский',e:'Russian'},
+  {c:'ar',f:'🇸🇦',n:'العربية',e:'Arabic'},
+  {c:'zh',f:'🇨🇳',n:'中文',e:'Chinese'},
+  {c:'ja',f:'🇯🇵',n:'日本語',e:'Japanese'},
+  {c:'ko',f:'🇰🇷',n:'한국어',e:'Korean'},
+  {c:'hi',f:'🇮🇳',n:'हिन्दी',e:'Hindi'},
+  {c:'nl',f:'🇳🇱',n:'Nederlands',e:'Dutch'},
+  {c:'pl',f:'🇵🇱',n:'Polski',e:'Polish'},
+  {c:'sv',f:'🇸🇪',n:'Svenska',e:'Swedish'},
+  {c:'uk',f:'🇺🇦',n:'Українська',e:'Ukrainian'},
+  {c:'az',f:'🇦🇿',n:'Azərbaycan',e:'Azerbaijani'},
+];
+
+const UI={
+  tr:{chooseLang:'Dilinizi seçin',tagline:'Zeki dostunuz. Her zaman yanınızda.',googleBtn:'Google ile Giriş Yap',emailBtn:'E-posta ile Devam Et',login:'Giriş Yap',register:'Kayıt Ol',nameL:'AD SOYAD',emailL:'E-POSTA',passL:'ŞİFRE',errEmpty:'Lütfen alanları doldurun.',errAuth:'Giriş hatası. Tekrar deneyin.',homeTagline:'Her sorunuza yanıt, her hayalinize görsel.',chat:'Sohbet',chatD:'Derin sohbetler',voice:'Ses',voiceD:'Doğal konuşma',img:'Görüntü Oluşturma',imgD:'Görsel yaratım',pdf:'PDF',pdfD:'Özetleri dışa aktar',strip:'Sınırsız görsel oluşturma · Özel resimler · Sesli asistan',voiceTitle:'Sesli Asistan',vReady:'Dokunun ve konuşun',vListening:'Dinliyorum...',vThinking:'Düşünüyorum...',vSpeaking:'Konuşuyor...',imgTitle:'Görüntü Oluşturma',imgPh:'Hayal ettiğin görseli oluştur',styleL:'STİL',genBtn:'Oluştur',dlBtn:'İndir',pdfTitle:'PDF Oluştur',pdfTitleL:'DOKÜMAN BAŞLIĞI',pdfTplL:'ŞABLON',pdfContentL:'İÇERİK',pdfAiBtn:'✨ AI ile içerik oluştur',createPdfBtn:'PDF Oluştur',pdfProgress:'PDF oluşturuluyor...',pdfAiGen:'AI içerik yazıyor...',settings:'Ayarlar',genderL:'SES CİNSİYETİ',female:'Kadın',femaleD:'Yumuşak, samimi',male:'Erkek',maleD:'Güçlü, net',speedL:'KONUŞMA HIZI',slow:'Yavaş',fast:'Hızlı',close:'Kapat',history:'Geçmiş',newChat:'Yeni Sohbet',online:'Çevrimiçi',chatInput:'Ask APEX anything...',emptyHey:'Merhaba, ben APEX.',emptySub:'Sana nasıl yardımcı olabilirim?',errImg:'Görüntü oluşturulamadı.',errPdf:'PDF oluşturulamadı.',styles:['Gerçekçi','Anime','Dijital Sanat','Yağlı Boya','Siyah-Beyaz','Fotoğraf','3D Render','Suluboya'],tpls:['Genel','Rapor','CV','Mektup','Sunum']},
+  en:{chooseLang:'Choose your language',tagline:'Your intelligent companion. Always there.',googleBtn:'Continue with Google',emailBtn:'Continue with Email',login:'Login',register:'Register',nameL:'FULL NAME',emailL:'EMAIL',passL:'PASSWORD',errEmpty:'Please fill in all fields.',errAuth:'Login failed. Try again.',homeTagline:'Answers to every question, art for every dream.',chat:'Chat',chatD:'Deep conversations',voice:'Voice',voiceD:'Natural speech',img:'Image Creation',imgD:'Visual creation',pdf:'PDF',pdfD:'Export summaries',strip:'Unlimited image generation · Custom images · Voice assistant',voiceTitle:'Voice Assistant',vReady:'Tap to speak',vListening:'Listening...',vThinking:'Thinking...',vSpeaking:'Speaking...',imgTitle:'Image Generation',imgPh:'Create the image you imagine',styleL:'STYLE',genBtn:'Generate',dlBtn:'Download',pdfTitle:'Create PDF',pdfTitleL:'DOCUMENT TITLE',pdfTplL:'TEMPLATE',pdfContentL:'CONTENT',pdfAiBtn:'✨ Generate content with AI',createPdfBtn:'Create PDF',pdfProgress:'Creating PDF...',pdfAiGen:'AI is writing content...',settings:'Settings',genderL:'VOICE GENDER',female:'Female',femaleD:'Soft, warm',male:'Male',maleD:'Strong, clear',speedL:'SPEAKING SPEED',slow:'Slow',fast:'Fast',close:'Close',history:'History',newChat:'New Chat',online:'Online',chatInput:'Ask APEX anything...',emptyHey:"Hey, I'm APEX.",emptySub:"What's on your mind?",errImg:'Could not generate image.',errPdf:'Could not create PDF.',styles:['Realistic','Anime','Digital Art','Oil Paint','Black & White','Photo','3D Render','Watercolor'],tpls:['General','Report','Resume','Letter','Presentation']},
+  de:{chooseLang:'Sprache wählen',tagline:'Ihr intelligenter Begleiter.',googleBtn:'Mit Google anmelden',emailBtn:'Mit E-Mail fortfahren',login:'Anmelden',register:'Registrieren',nameL:'NAME',emailL:'E-MAIL',passL:'PASSWORT',errEmpty:'Bitte alle Felder ausfüllen.',errAuth:'Anmeldung fehlgeschlagen.',homeTagline:'Antworten auf jede Frage, Kunst für jeden Traum.',chat:'Chat',chatD:'Tiefe Gespräche',voice:'Stimme',voiceD:'Natürliche Sprache',img:'Bildgenerierung',imgD:'Visuelle Kreation',pdf:'PDF',pdfD:'Zusammenfassungen exportieren',strip:'Unbegrenzte Bilder · Sprachassistent',voiceTitle:'Sprachassistent',vReady:'Tippen zum Sprechen',vListening:'Höre zu...',vThinking:'Denke nach...',vSpeaking:'Spreche...',imgTitle:'Bildgenerierung',imgPh:'Erstelle das Bild deiner Vorstellung',styleL:'STIL',genBtn:'Erstellen',dlBtn:'Herunterladen',pdfTitle:'PDF erstellen',pdfTitleL:'DOKUMENTTITEL',pdfTplL:'VORLAGE',pdfContentL:'INHALT',pdfAiBtn:'✨ Inhalt mit KI generieren',createPdfBtn:'PDF erstellen',pdfProgress:'PDF wird erstellt...',pdfAiGen:'KI schreibt...',settings:'Einstellungen',genderL:'STIMME',female:'Weiblich',femaleD:'Sanft, warm',male:'Männlich',maleD:'Stark, klar',speedL:'SPRECHGESCHWINDIGKEIT',slow:'Langsam',fast:'Schnell',close:'Schließen',history:'Verlauf',newChat:'Neuer Chat',online:'Online',chatInput:'APEX fragen...',emptyHey:'Hallo, ich bin APEX.',emptySub:'Wie kann ich helfen?',errImg:'Bild konnte nicht erstellt werden.',errPdf:'PDF konnte nicht erstellt werden.',styles:['Realistisch','Anime','Digitale Kunst','Ölgemälde','Schwarz-Weiß','Foto','3D-Render','Aquarell'],tpls:['Allgemein','Bericht','Lebenslauf','Brief','Präsentation']},
+  fr:{chooseLang:'Choisissez votre langue',tagline:'Votre compagnon intelligent.',googleBtn:'Continuer avec Google',emailBtn:'Continuer avec e-mail',login:'Connexion',register:'Inscription',nameL:'NOM',emailL:'E-MAIL',passL:'MOT DE PASSE',errEmpty:'Veuillez remplir tous les champs.',errAuth:'Connexion échouée.',homeTagline:"Des réponses à chaque question.",chat:'Chat',chatD:'Conversations profondes',voice:'Voix',voiceD:'Parole naturelle',img:"Génération d'image",imgD:'Création visuelle',pdf:'PDF',pdfD:'Exporter les résumés',strip:"Assistant vocal · Génération d'images",voiceTitle:'Assistant vocal',vReady:'Appuyez pour parler',vListening:"J'écoute...",vThinking:'Je réfléchis...',vSpeaking:'Je parle...',imgTitle:"Génération d'image",imgPh:"Créez l'image que vous imaginez",styleL:'STYLE',genBtn:'Générer',dlBtn:'Télécharger',pdfTitle:'Créer un PDF',pdfTitleL:'TITRE',pdfTplL:'MODÈLE',pdfContentL:'CONTENU',pdfAiBtn:"✨ Générer avec l'IA",createPdfBtn:'Créer PDF',pdfProgress:'Création du PDF...',pdfAiGen:"L'IA écrit...",settings:'Paramètres',genderL:'VOIX',female:'Féminine',femaleD:'Douce, chaleureuse',male:'Masculine',maleD:'Forte, claire',speedL:'VITESSE',slow:'Lent',fast:'Rapide',close:'Fermer',history:'Historique',newChat:'Nouveau chat',online:'En ligne',chatInput:'Demandez à APEX...',emptyHey:"Bonjour, je suis APEX.",emptySub:'À quoi pensez-vous?',errImg:"Impossible de générer l'image.",errPdf:'Impossible de créer le PDF.',styles:['Réaliste','Anime','Art numérique','Huile','Noir et blanc','Photo','Rendu 3D','Aquarelle'],tpls:['Général','Rapport','CV','Lettre','Présentation']},
+  es:{chooseLang:'Elige tu idioma',tagline:'Tu compañero inteligente. Siempre contigo.',googleBtn:'Continuar con Google',emailBtn:'Continuar con correo',login:'Iniciar sesión',register:'Registrarse',nameL:'NOMBRE',emailL:'CORREO',passL:'CONTRASEÑA',errEmpty:'Por favor completa todos los campos.',errAuth:'Error al iniciar sesión.',homeTagline:'Respuestas a cada pregunta, arte para cada sueño.',chat:'Chat',chatD:'Conversaciones profundas',voice:'Voz',voiceD:'Habla natural',img:'Crear imagen',imgD:'Creación visual',pdf:'PDF',pdfD:'Exportar resúmenes',strip:'Imágenes ilimitadas · Asistente de voz',voiceTitle:'Asistente de voz',vReady:'Toca para hablar',vListening:'Escuchando...',vThinking:'Pensando...',vSpeaking:'Hablando...',imgTitle:'Generación de imágenes',imgPh:'Crea la imagen que imaginas',styleL:'ESTILO',genBtn:'Generar',dlBtn:'Descargar',pdfTitle:'Crear PDF',pdfTitleL:'TÍTULO DEL DOCUMENTO',pdfTplL:'PLANTILLA',pdfContentL:'CONTENIDO',pdfAiBtn:'✨ Generar contenido con IA',createPdfBtn:'Crear PDF',pdfProgress:'Creando PDF...',pdfAiGen:'La IA está escribiendo...',settings:'Configuración',genderL:'VOZ',female:'Femenina',femaleD:'Suave, cálida',male:'Masculina',maleD:'Fuerte, clara',speedL:'VELOCIDAD',slow:'Lento',fast:'Rápido',close:'Cerrar',history:'Historial',newChat:'Nuevo chat',online:'En línea',chatInput:'Pregunta a APEX...',emptyHey:'Hola, soy APEX.',emptySub:'¿En qué puedo ayudarte?',errImg:'No se pudo generar la imagen.',errPdf:'No se pudo crear el PDF.',styles:['Realista','Anime','Arte digital','Óleo','Blanco y negro','Foto','Render 3D','Acuarela'],tpls:['General','Informe','CV','Carta','Presentación']},
+  it:{chooseLang:'Scegli la tua lingua',tagline:'Il tuo compagno intelligente. Sempre con te.',googleBtn:'Continua con Google',emailBtn:'Continua con email',login:'Accedi',register:'Registrati',nameL:'NOME',emailL:'EMAIL',passL:'PASSWORD',errEmpty:'Compila tutti i campi.',errAuth:'Accesso fallito.',homeTagline:'Risposte a ogni domanda, arte per ogni sogno.',chat:'Chat',chatD:'Conversazioni profonde',voice:'Voce',voiceD:'Linguaggio naturale',img:'Crea immagine',imgD:'Creazione visiva',pdf:'PDF',pdfD:'Esporta riassunti',strip:'Immagini illimitate · Assistente vocale',voiceTitle:'Assistente vocale',vReady:'Tocca per parlare',vListening:'In ascolto...',vThinking:'Sto pensando...',vSpeaking:'Sto parlando...',imgTitle:'Generazione immagini',imgPh:"Crea l'immagine che immagini",styleL:'STILE',genBtn:'Genera',dlBtn:'Scarica',pdfTitle:'Crea PDF',pdfTitleL:'TITOLO DOCUMENTO',pdfTplL:'MODELLO',pdfContentL:'CONTENUTO',pdfAiBtn:"✨ Genera contenuto con l'IA",createPdfBtn:'Crea PDF',pdfProgress:'Creazione PDF...',pdfAiGen:"L'IA sta scrivendo...",settings:'Impostazioni',genderL:'VOCE',female:'Femminile',femaleD:'Morbida, calda',male:'Maschile',maleD:'Forte, chiara',speedL:'VELOCITÀ',slow:'Lento',fast:'Veloce',close:'Chiudi',history:'Cronologia',newChat:'Nuova chat',online:'Online',chatInput:'Chiedi ad APEX...',emptyHey:'Ciao, sono APEX.',emptySub:'Come posso aiutarti?',errImg:"Impossibile generare l'immagine.",errPdf:'Impossibile creare il PDF.',styles:['Realistico','Anime','Arte digitale','Olio','Bianco e nero','Foto','Render 3D','Acquerello'],tpls:['Generale','Rapporto','CV','Lettera','Presentazione']},
+  pt:{chooseLang:'Escolha seu idioma',tagline:'Seu companheiro inteligente. Sempre ao seu lado.',googleBtn:'Continuar com Google',emailBtn:'Continuar com e-mail',login:'Entrar',register:'Cadastrar',nameL:'NOME',emailL:'E-MAIL',passL:'SENHA',errEmpty:'Por favor preencha todos os campos.',errAuth:'Falha no login.',homeTagline:'Respostas para cada pergunta, arte para cada sonho.',chat:'Chat',chatD:'Conversas profundas',voice:'Voz',voiceD:'Fala natural',img:'Criar imagem',imgD:'Criação visual',pdf:'PDF',pdfD:'Exportar resumos',strip:'Imagens ilimitadas · Assistente de voz',voiceTitle:'Assistente de voz',vReady:'Toque para falar',vListening:'Ouvindo...',vThinking:'Pensando...',vSpeaking:'Falando...',imgTitle:'Geração de imagens',imgPh:'Crie a imagem que você imagina',styleL:'ESTILO',genBtn:'Gerar',dlBtn:'Baixar',pdfTitle:'Criar PDF',pdfTitleL:'TÍTULO DO DOCUMENTO',pdfTplL:'MODELO',pdfContentL:'CONTEÚDO',pdfAiBtn:'✨ Gerar conteúdo com IA',createPdfBtn:'Criar PDF',pdfProgress:'Criando PDF...',pdfAiGen:'A IA está escrevendo...',settings:'Configurações',genderL:'VOZ',female:'Feminina',femaleD:'Suave, calorosa',male:'Masculina',maleD:'Forte, clara',speedL:'VELOCIDADE',slow:'Lento',fast:'Rápido',close:'Fechar',history:'Histórico',newChat:'Nova conversa',online:'Online',chatInput:'Pergunte ao APEX...',emptyHey:'Olá, sou o APEX.',emptySub:'Como posso ajudar?',errImg:'Não foi possível gerar a imagem.',errPdf:'Não foi possível criar o PDF.',styles:['Realista','Anime','Arte digital','Óleo','Preto e branco','Foto','Render 3D','Aquarela'],tpls:['Geral','Relatório','CV','Carta','Apresentação']},
+  ru:{chooseLang:'Выберите язык',tagline:'Ваш умный помощник. Всегда рядом.',googleBtn:'Войти через Google',emailBtn:'Продолжить с почтой',login:'Войти',register:'Зарегистрироваться',nameL:'ИМЯ',emailL:'ПОЧТА',passL:'ПАРОЛЬ',errEmpty:'Пожалуйста, заполните все поля.',errAuth:'Ошибка входа.',homeTagline:'Ответы на каждый вопрос, искусство для каждой мечты.',chat:'Чат',chatD:'Глубокие беседы',voice:'Голос',voiceD:'Естественная речь',img:'Создать изображение',imgD:'Визуальное творчество',pdf:'PDF',pdfD:'Экспорт резюме',strip:'Безлимитные изображения · Голосовой помощник',voiceTitle:'Голосовой помощник',vReady:'Нажмите чтобы говорить',vListening:'Слушаю...',vThinking:'Думаю...',vSpeaking:'Говорю...',imgTitle:'Генерация изображений',imgPh:'Создайте изображение, которое вы представляете',styleL:'СТИЛЬ',genBtn:'Создать',dlBtn:'Скачать',pdfTitle:'Создать PDF',pdfTitleL:'НАЗВАНИЕ ДОКУМЕНТА',pdfTplL:'ШАБЛОН',pdfContentL:'СОДЕРЖАНИЕ',pdfAiBtn:'✨ Создать контент с ИИ',createPdfBtn:'Создать PDF',pdfProgress:'Создание PDF...',pdfAiGen:'ИИ пишет контент...',settings:'Настройки',genderL:'ГОЛОС',female:'Женский',femaleD:'Мягкий, тёплый',male:'Мужской',maleD:'Сильный, чёткий',speedL:'СКОРОСТЬ РЕЧИ',slow:'Медленно',fast:'Быстро',close:'Закрыть',history:'История',newChat:'Новый чат',online:'Онлайн',chatInput:'Спросите APEX...',emptyHey:'Привет, я APEX.',emptySub:'Чем могу помочь?',errImg:'Не удалось создать изображение.',errPdf:'Не удалось создать PDF.',styles:['Реалистичный','Аниме','Цифровое искусство','Масло','Чёрно-белый','Фото','3D рендер','Акварель'],tpls:['Общий','Отчёт','Резюме','Письмо','Презентация']},
+  ar:{chooseLang:'اختر لغتك',tagline:'رفيقك الذكي. دائماً بجانبك.',googleBtn:'المتابعة مع Google',emailBtn:'المتابعة بالبريد',login:'تسجيل الدخول',register:'إنشاء حساب',nameL:'الاسم',emailL:'البريد الإلكتروني',passL:'كلمة المرور',errEmpty:'يرجى ملء جميع الحقول.',errAuth:'فشل تسجيل الدخول.',homeTagline:'إجابات لكل سؤال، فن لكل حلم.',chat:'دردشة',chatD:'محادثات عميقة',voice:'صوت',voiceD:'كلام طبيعي',img:'إنشاء صورة',imgD:'إبداع بصري',pdf:'PDF',pdfD:'تصدير الملخصات',strip:'صور غير محدودة · مساعد صوتي',voiceTitle:'المساعد الصوتي',vReady:'اضغط للتحدث',vListening:'أستمع...',vThinking:'أفكر...',vSpeaking:'أتحدث...',imgTitle:'إنشاء الصور',imgPh:'أنشئ الصورة التي تتخيلها',styleL:'الأسلوب',genBtn:'إنشاء',dlBtn:'تحميل',pdfTitle:'إنشاء PDF',pdfTitleL:'عنوان المستند',pdfTplL:'القالب',pdfContentL:'المحتوى',pdfAiBtn:'✨ إنشاء محتوى بالذكاء الاصطناعي',createPdfBtn:'إنشاء PDF',pdfProgress:'جاري إنشاء PDF...',pdfAiGen:'الذكاء الاصطناعي يكتب...',settings:'الإعدادات',genderL:'الصوت',female:'أنثى',femaleD:'ناعم، دافئ',male:'ذكر',maleD:'قوي، واضح',speedL:'سرعة الكلام',slow:'بطيء',fast:'سريع',close:'إغلاق',history:'السجل',newChat:'محادثة جديدة',online:'متصل',chatInput:'اسأل APEX...',emptyHey:'مرحباً، أنا APEX.',emptySub:'كيف يمكنني مساعدتك؟',errImg:'تعذر إنشاء الصورة.',errPdf:'تعذر إنشاء PDF.',styles:['واقعي','أنيمي','فن رقمي','زيت','أبيض وأسود','صورة','ثلاثي الأبعاد','ألوان مائية'],tpls:['عام','تقرير','سيرة ذاتية','رسالة','عرض تقديمي']},
+  zh:{chooseLang:'选择您的语言',tagline:'您的智能伙伴，随时相伴。',googleBtn:'使用Google继续',emailBtn:'使用邮箱继续',login:'登录',register:'注册',nameL:'姓名',emailL:'邮箱',passL:'密码',errEmpty:'请填写所有字段。',errAuth:'登录失败。',homeTagline:'回答每一个问题，实现每一个梦想。',chat:'聊天',chatD:'深度对话',voice:'语音',voiceD:'自然语言',img:'创建图像',imgD:'视觉创作',pdf:'PDF',pdfD:'导出摘要',strip:'无限图像生成 · 语音助手',voiceTitle:'语音助手',vReady:'点击说话',vListening:'正在听...',vThinking:'正在思考...',vSpeaking:'正在说话...',imgTitle:'图像生成',imgPh:'创建您想象的图像',styleL:'风格',genBtn:'生成',dlBtn:'下载',pdfTitle:'创建PDF',pdfTitleL:'文档标题',pdfTplL:'模板',pdfContentL:'内容',pdfAiBtn:'✨ 用AI生成内容',createPdfBtn:'创建PDF',pdfProgress:'正在创建PDF...',pdfAiGen:'AI正在写作...',settings:'设置',genderL:'语音性别',female:'女声',femaleD:'温柔，温暖',male:'男声',maleD:'有力，清晰',speedL:'语速',slow:'慢',fast:'快',close:'关闭',history:'历史',newChat:'新对话',online:'在线',chatInput:'问APEX任何问题...',emptyHey:'你好，我是APEX。',emptySub:'有什么我可以帮你的吗？',errImg:'无法生成图像。',errPdf:'无法创建PDF。',styles:['写实','动漫','数字艺术','油画','黑白','摄影','3D渲染','水彩'],tpls:['通用','报告','简历','信件','演示文稿']},
+  ja:{chooseLang:'言語を選択してください',tagline:'あなたのインテリジェントな仲間。いつでもそばに。',googleBtn:'Googleで続ける',emailBtn:'メールで続ける',login:'ログイン',register:'登録',nameL:'氏名',emailL:'メール',passL:'パスワード',errEmpty:'すべての項目を入力してください。',errAuth:'ログインに失敗しました。',homeTagline:'あらゆる質問に答え、あらゆる夢をアートに。',chat:'チャット',chatD:'深い会話',voice:'音声',voiceD:'自然な音声',img:'画像生成',imgD:'ビジュアル作成',pdf:'PDF',pdfD:'サマリーをエクスポート',strip:'無制限の画像生成 · 音声アシスタント',voiceTitle:'音声アシスタント',vReady:'タップして話す',vListening:'聞いています...',vThinking:'考えています...',vSpeaking:'話しています...',imgTitle:'画像生成',imgPh:'想像した画像を作成',styleL:'スタイル',genBtn:'生成',dlBtn:'ダウンロード',pdfTitle:'PDFを作成',pdfTitleL:'ドキュメントタイトル',pdfTplL:'テンプレート',pdfContentL:'コンテンツ',pdfAiBtn:'✨ AIでコンテンツを生成',createPdfBtn:'PDFを作成',pdfProgress:'PDFを作成中...',pdfAiGen:'AIが書いています...',settings:'設定',genderL:'音声の性別',female:'女性',femaleD:'柔らか、温かい',male:'男性',maleD:'力強い、明確',speedL:'話速',slow:'ゆっくり',fast:'速い',close:'閉じる',history:'履歴',newChat:'新しいチャット',online:'オンライン',chatInput:'APEXに質問...',emptyHey:'こんにちは、APEXです。',emptySub:'何かお手伝いできますか？',errImg:'画像を生成できませんでした。',errPdf:'PDFを作成できませんでした。',styles:['リアル','アニメ','デジタルアート','油絵','白黒','写真','3Dレンダー','水彩'],tpls:['一般','レポート','履歴書','手紙','プレゼン']},
+  ko:{chooseLang:'언어를 선택하세요',tagline:'당신의 지능형 동반자. 항상 함께.',googleBtn:'Google로 계속',emailBtn:'이메일로 계속',login:'로그인',register:'회원가입',nameL:'이름',emailL:'이메일',passL:'비밀번호',errEmpty:'모든 항목을 입력해주세요.',errAuth:'로그인 실패.',homeTagline:'모든 질문에 답하고, 모든 꿈을 예술로.',chat:'채팅',chatD:'깊은 대화',voice:'음성',voiceD:'자연스러운 음성',img:'이미지 생성',imgD:'시각적 창작',pdf:'PDF',pdfD:'요약 내보내기',strip:'무제한 이미지 생성 · 음성 어시스턴트',voiceTitle:'음성 어시스턴트',vReady:'탭하여 말하기',vListening:'듣고 있습니다...',vThinking:'생각 중...',vSpeaking:'말하는 중...',imgTitle:'이미지 생성',imgPh:'상상하는 이미지를 만드세요',styleL:'스타일',genBtn:'생성',dlBtn:'다운로드',pdfTitle:'PDF 만들기',pdfTitleL:'문서 제목',pdfTplL:'템플릿',pdfContentL:'내용',pdfAiBtn:'✨ AI로 내용 생성',createPdfBtn:'PDF 만들기',pdfProgress:'PDF 생성 중...',pdfAiGen:'AI가 작성 중...',settings:'설정',genderL:'음성 성별',female:'여성',femaleD:'부드럽고 따뜻한',male:'남성',maleD:'강하고 명확한',speedL:'말하기 속도',slow:'느리게',fast:'빠르게',close:'닫기',history:'기록',newChat:'새 채팅',online:'온라인',chatInput:'APEX에게 물어보세요...',emptyHey:'안녕하세요, 저는 APEX입니다.',emptySub:'무엇을 도와드릴까요?',errImg:'이미지를 생성할 수 없습니다.',errPdf:'PDF를 만들 수 없습니다.',styles:['사실적','애니메이션','디지털 아트','유화','흑백','사진','3D 렌더','수채화'],tpls:['일반','보고서','이력서','편지','프레젠테이션']},
+  hi:{chooseLang:'अपनी भाषा चुनें',tagline:'आपका बुद्धिमान साथी। हमेशा साथ।',googleBtn:'Google से जारी रखें',emailBtn:'ईमेल से जारी रखें',login:'लॉग इन',register:'पंजीकरण',nameL:'नाम',emailL:'ईमेल',passL:'पासवर्ड',errEmpty:'कृपया सभी फ़ील्ड भरें।',errAuth:'लॉगिन विफल।',homeTagline:'हर सवाल का जवाब, हर सपने की कला।',chat:'चैट',chatD:'गहरी बातचीत',voice:'आवाज़',voiceD:'प्राकृतिक भाषण',img:'छवि बनाएं',imgD:'दृश्य निर्माण',pdf:'PDF',pdfD:'सारांश निर्यात',strip:'असीमित छवियां · वॉयस असिस्टेंट',voiceTitle:'वॉयस असिस्टेंट',vReady:'बात करने के लिए टैप करें',vListening:'सुन रहा हूं...',vThinking:'सोच रहा हूं...',vSpeaking:'बोल रहा हूं...',imgTitle:'छवि निर्माण',imgPh:'जो छवि आप सोचते हैं उसे बनाएं',styleL:'शैली',genBtn:'बनाएं',dlBtn:'डाउनलोड',pdfTitle:'PDF बनाएं',pdfTitleL:'दस्तावेज़ शीर्षक',pdfTplL:'टेम्पलेट',pdfContentL:'सामग्री',pdfAiBtn:'✨ AI से सामग्री बनाएं',createPdfBtn:'PDF बनाएं',pdfProgress:'PDF बन रहा है...',pdfAiGen:'AI लिख रहा है...',settings:'सेटिंग्स',genderL:'आवाज़ लिंग',female:'महिला',femaleD:'मृदु, गर्म',male:'पुरुष',maleD:'मज़बूत, स्पष्ट',speedL:'बोलने की गति',slow:'धीरे',fast:'तेज़',close:'बंद करें',history:'इतिहास',newChat:'नई चैट',online:'ऑनलाइन',chatInput:'APEX से पूछें...',emptyHey:'नमस्ते, मैं APEX हूं।',emptySub:'मैं आपकी कैसे मदद कर सकता हूं?',errImg:'छवि नहीं बनाई जा सकी।',errPdf:'PDF नहीं बनाया जा सका।',styles:['यथार्थवादी','एनीमे','डिजिटल कला','तेल चित्र','श्याम-श्वेत','फ़ोटो','3D रेंडर','जलरंग'],tpls:['सामान्य','रिपोर्ट','CV','पत्र','प्रस्तुति']},
+  nl:{chooseLang:'Kies je taal',tagline:'Jouw intelligente metgezel. Altijd bij je.',googleBtn:'Doorgaan met Google',emailBtn:'Doorgaan met e-mail',login:'Inloggen',register:'Registreren',nameL:'NAAM',emailL:'E-MAIL',passL:'WACHTWOORD',errEmpty:'Vul alle velden in.',errAuth:'Inloggen mislukt.',homeTagline:'Antwoorden op elke vraag, kunst voor elke droom.',chat:'Chat',chatD:'Diepe gesprekken',voice:'Stem',voiceD:'Natuurlijke spraak',img:'Afbeelding maken',imgD:'Visuele creatie',pdf:'PDF',pdfD:'Samenvattingen exporteren',strip:'Onbeperkte afbeeldingen · Spraakassistent',voiceTitle:'Spraakassistent',vReady:'Tik om te spreken',vListening:'Luisteren...',vThinking:'Denken...',vSpeaking:'Spreken...',imgTitle:'Afbeeldingen genereren',imgPh:'Maak de afbeelding die je je voorstelt',styleL:'STIJL',genBtn:'Genereren',dlBtn:'Downloaden',pdfTitle:'PDF maken',pdfTitleL:'DOCUMENTTITEL',pdfTplL:'SJABLOON',pdfContentL:'INHOUD',pdfAiBtn:'✨ Inhoud genereren met AI',createPdfBtn:'PDF maken',pdfProgress:'PDF wordt gemaakt...',pdfAiGen:'AI schrijft...',settings:'Instellingen',genderL:'STEM',female:'Vrouwelijk',femaleD:'Zacht, warm',male:'Mannelijk',maleD:'Sterk, duidelijk',speedL:'SPREEKSNELHEID',slow:'Langzaam',fast:'Snel',close:'Sluiten',history:'Geschiedenis',newChat:'Nieuwe chat',online:'Online',chatInput:'Vraag APEX...',emptyHey:'Hoi, ik ben APEX.',emptySub:'Hoe kan ik je helpen?',errImg:'Kan afbeelding niet genereren.',errPdf:'Kan PDF niet maken.',styles:['Realistisch','Anime','Digitale kunst','Olieverf','Zwart-wit','Foto','3D-render','Aquarel'],tpls:['Algemeen','Rapport','CV','Brief','Presentatie']},
+  pl:{chooseLang:'Wybierz swój język',tagline:'Twój inteligentny towarzysz. Zawsze przy Tobie.',googleBtn:'Kontynuuj z Google',emailBtn:'Kontynuuj z e-mailem',login:'Zaloguj się',register:'Zarejestruj się',nameL:'IMIĘ',emailL:'E-MAIL',passL:'HASŁO',errEmpty:'Proszę wypełnić wszystkie pola.',errAuth:'Logowanie nieudane.',homeTagline:'Odpowiedzi na każde pytanie, sztuka dla każdego marzenia.',chat:'Czat',chatD:'Głębokie rozmowy',voice:'Głos',voiceD:'Naturalna mowa',img:'Tworzenie obrazów',imgD:'Kreacja wizualna',pdf:'PDF',pdfD:'Eksportuj streszczenia',strip:'Nieograniczone obrazy · Asystent głosowy',voiceTitle:'Asystent głosowy',vReady:'Dotknij aby mówić',vListening:'Słucham...',vThinking:'Myślę...',vSpeaking:'Mówię...',imgTitle:'Generowanie obrazów',imgPh:'Stwórz obraz który sobie wyobrażasz',styleL:'STYL',genBtn:'Generuj',dlBtn:'Pobierz',pdfTitle:'Utwórz PDF',pdfTitleL:'TYTUŁ DOKUMENTU',pdfTplL:'SZABLON',pdfContentL:'TREŚĆ',pdfAiBtn:'✨ Generuj treść z AI',createPdfBtn:'Utwórz PDF',pdfProgress:'Tworzenie PDF...',pdfAiGen:'AI pisze...',settings:'Ustawienia',genderL:'GŁOS',female:'Żeński',femaleD:'Miękki, ciepły',male:'Męski',maleD:'Silny, wyraźny',speedL:'SZYBKOŚĆ MOWY',slow:'Wolno',fast:'Szybko',close:'Zamknij',history:'Historia',newChat:'Nowy czat',online:'Online',chatInput:'Zapytaj APEX...',emptyHey:'Cześć, jestem APEX.',emptySub:'Jak mogę ci pomóc?',errImg:'Nie można wygenerować obrazu.',errPdf:'Nie można utworzyć PDF.',styles:['Realistyczny','Anime','Sztuka cyfrowa','Olej','Czarno-biały','Zdjęcie','Render 3D','Akwarela'],tpls:['Ogólny','Raport','CV','List','Prezentacja']},
+  sv:{chooseLang:'Välj ditt språk',tagline:'Din intelligenta följeslagare. Alltid där.',googleBtn:'Fortsätt med Google',emailBtn:'Fortsätt med e-post',login:'Logga in',register:'Registrera',nameL:'NAMN',emailL:'E-POST',passL:'LÖSENORD',errEmpty:'Fyll i alla fält.',errAuth:'Inloggning misslyckades.',homeTagline:'Svar på varje fråga, konst för varje dröm.',chat:'Chatt',chatD:'Djupa samtal',voice:'Röst',voiceD:'Naturligt tal',img:'Skapa bild',imgD:'Visuell skapelse',pdf:'PDF',pdfD:'Exportera sammanfattningar',strip:'Obegränsade bilder · Röstassistent',voiceTitle:'Röstassistent',vReady:'Tryck för att tala',vListening:'Lyssnar...',vThinking:'Tänker...',vSpeaking:'Talar...',imgTitle:'Bildgenerering',imgPh:'Skapa bilden du föreställer dig',styleL:'STIL',genBtn:'Generera',dlBtn:'Ladda ner',pdfTitle:'Skapa PDF',pdfTitleL:'DOKUMENTTITEL',pdfTplL:'MALL',pdfContentL:'INNEHÅLL',pdfAiBtn:'✨ Generera innehåll med AI',createPdfBtn:'Skapa PDF',pdfProgress:'Skapar PDF...',pdfAiGen:'AI skriver...',settings:'Inställningar',genderL:'RÖST',female:'Kvinnlig',femaleD:'Mjuk, varm',male:'Manlig',maleD:'Stark, tydlig',speedL:'TALHASTIGHET',slow:'Långsamt',fast:'Snabbt',close:'Stäng',history:'Historik',newChat:'Ny chatt',online:'Online',chatInput:'Fråga APEX...',emptyHey:'Hej, jag är APEX.',emptySub:'Hur kan jag hjälpa dig?',errImg:'Kunde inte generera bild.',errPdf:'Kunde inte skapa PDF.',styles:['Realistisk','Anime','Digital konst','Olja','Svartvit','Foto','3D-render','Akvarell'],tpls:['Allmänt','Rapport','CV','Brev','Presentation']},
+  uk:{chooseLang:'Оберіть мову',tagline:'Ваш розумний помічник. Завжди поруч.',googleBtn:'Продовжити з Google',emailBtn:'Продовжити з поштою',login:'Увійти',register:'Зареєструватися',nameL:"ІМ'Я",emailL:'ПОШТА',passL:'ПАРОЛЬ',errEmpty:'Будь ласка, заповніть всі поля.',errAuth:'Помилка входу.',homeTagline:'Відповіді на кожне питання, мистецтво для кожної мрії.',chat:'Чат',chatD:'Глибокі розмови',voice:'Голос',voiceD:'Природне мовлення',img:'Створити зображення',imgD:'Візуальна творчість',pdf:'PDF',pdfD:'Експорт резюме',strip:'Безліміт зображень · Голосовий помічник',voiceTitle:'Голосовий помічник',vReady:'Натисніть щоб говорити',vListening:'Слухаю...',vThinking:'Думаю...',vSpeaking:'Говорю...',imgTitle:'Генерація зображень',imgPh:'Створіть зображення яке уявляєте',styleL:'СТИЛЬ',genBtn:'Створити',dlBtn:'Завантажити',pdfTitle:'Створити PDF',pdfTitleL:'НАЗВА ДОКУМЕНТА',pdfTplL:'ШАБЛОН',pdfContentL:'ЗМІСТ',pdfAiBtn:'✨ Створити контент з ШІ',createPdfBtn:'Створити PDF',pdfProgress:'Створення PDF...',pdfAiGen:'ШІ пише контент...',settings:'Налаштування',genderL:'ГОЛОС',female:'Жіночий',femaleD:'М\'який, теплий',male:'Чоловічий',maleD:'Сильний, чіткий',speedL:'ШВИДКІСТЬ МОВЛЕННЯ',slow:'Повільно',fast:'Швидко',close:'Закрити',history:'Історія',newChat:'Новий чат',online:'Онлайн',chatInput:'Запитайте APEX...',emptyHey:'Привіт, я APEX.',emptySub:'Чим можу допомогти?',errImg:'Не вдалося створити зображення.',errPdf:'Не вдалося створити PDF.',styles:['Реалістичний','Аніме','Цифрове мистецтво','Олія','Чорно-білий','Фото','3D рендер','Акварель'],tpls:['Загальний','Звіт','Резюме','Лист','Презентація']},
+  az:{chooseLang:'Dilinizi seçin',tagline:'Ağıllı yoldaşınız. Həmişə yanınızda.',googleBtn:'Google ilə davam et',emailBtn:'E-poçt ilə davam et',login:'Daxil ol',register:'Qeydiyyat',nameL:'AD SOYAD',emailL:'E-POÇT',passL:'ŞİFRƏ',errEmpty:'Zəhmət olmasa bütün sahələri doldurun.',errAuth:'Giriş xətası.',homeTagline:'Hər suala cavab, hər xəyala görsel.',chat:'Söhbət',chatD:'Dərin söhbətlər',voice:'Səs',voiceD:'Təbii nitq',img:'Şəkil yarat',imgD:'Vizual yaradıcılıq',pdf:'PDF',pdfD:'Xülasələri ixrac et',strip:'Limitsiz şəkil · Səsli köməkçi',voiceTitle:'Səsli Köməkçi',vReady:'Danışmaq üçün toxunun',vListening:'Dinləyirəm...',vThinking:'Düşünürəm...',vSpeaking:'Danışıram...',imgTitle:'Şəkil Yaradılması',imgPh:'Xəyal etdiyin şəkli yarat',styleL:'STİL',genBtn:'Yarat',dlBtn:'Yüklə',pdfTitle:'PDF Yarat',pdfTitleL:'SƏNƏD BAŞLIĞI',pdfTplL:'ŞABLON',pdfContentL:'MƏZMİUN',pdfAiBtn:'✨ AI ilə məzmun yarat',createPdfBtn:'PDF Yarat',pdfProgress:'PDF yaradılır...',pdfAiGen:'AI məzmun yazır...',settings:'Parametrlər',genderL:'SƏS CİNSİYYƏTİ',female:'Qadın',femaleD:'Yumşaq, səmimi',male:'Kişi',maleD:'Güclü, aydın',speedL:'DANIŞIQ SÜRƏTİ',slow:'Yavaş',fast:'Sürətli',close:'Bağla',history:'Tarixçə',newChat:'Yeni Söhbət',online:'Onlayndır',chatInput:'APEX-ə sual ver...',emptyHey:'Salam, mən APEX-əm.',emptySub:'Sizə necə kömək edə bilərəm?',errImg:'Şəkil yaradıla bilmədi.',errPdf:'PDF yaradıla bilmədi.',styles:['Realist','Anime','Rəqəmsal Sənət','Yağlı Boya','Qara-Ağ','Foto','3D Render','Suluboya'],tpls:['Ümumi','Hesabat','CV','Məktub','Təqdimat']},
+};
+function t(k){return(UI[lang]||UI.en)[k]||(UI.en)[k]||k;}
+
+// ─── INIT ───
+window.addEventListener('DOMContentLoaded',()=>{
+  buildLangGrid();
+  synth.onvoiceschanged=()=>{};
+  auth.onAuthStateChanged(u=>{
+    me=u;
+    if(u){applyLang();showScreen('home-screen');loadHistory();}
+  });
+});
+
+function buildLangGrid(){
+  const g=document.getElementById('lang-grid');g.innerHTML='';
+  LANGS.forEach(l=>{
+    const d=document.createElement('div');d.className='lang-btn';
+    d.innerHTML=`<span class="lang-flag">${l.f}</span><div><div class="lang-native">${l.n}</div><div class="lang-eng">${l.e}</div></div>`;
+    d.onclick=()=>selectLang(l.c);g.appendChild(d);
+  });
+}
+
+function selectLang(c){
+  lang=c;applyLang();
+  showScreen('home-screen');
+}
+
+function applyLang(){
+  // lang screen
+  $('ls-sub').textContent=t('chooseLang');
+  // auth tagline still exists
+  if($('auth-tagline'))$('auth-tagline').textContent=t('tagline');
+  if($('af-chat'))$('af-chat').textContent=t('chat');
+  if($('af-chat-d'))$('af-chat-d').textContent=t('chatD');
+  if($('af-voice'))$('af-voice').textContent=t('voice');
+  if($('af-voice-d'))$('af-voice-d').textContent=t('voiceD');
+  if($('af-img'))$('af-img').textContent=t('img');
+  if($('af-img-d'))$('af-img-d').textContent=t('imgD');
+  if($('af-pdf'))$('af-pdf').textContent=t('pdf');
+  if($('af-pdf-d'))$('af-pdf-d').textContent=t('pdfD');
+  if($('auth-strip-txt'))$('auth-strip-txt').textContent=t('strip');
+  // home
+  $('home-tagline').textContent=t('homeTagline');
+  $('h-chat').textContent=t('chat');$('h-chat-d').textContent=t('chatD');
+  $('h-voice').textContent=t('voice');$('h-voice-d').textContent=t('voiceD');
+  $('h-img').textContent=t('img');$('h-img-d').textContent=t('imgD');
+  $('h-pdf').textContent=t('pdf');$('h-pdf-d').textContent=t('pdfD');
+  $('home-strip-txt').textContent=t('strip');
+  // chat
+  $('sb-history-lbl').textContent=t('history');
+  $('sb-newchat-lbl').textContent=t('newChat');
+  $('ct-online-lbl').textContent=t('online');
+  $('chat-ta').placeholder=t('chatInput');
+  $('chat-empty-hey').textContent=t('emptyHey');
+  $('chat-empty-sub').textContent=t('emptySub');
+  // voice
+  $('voice-title-lbl').textContent=t('voiceTitle');
+  $('v-status').textContent=t('vReady');
+  // image
+  $('img-title-lbl').textContent=t('imgTitle');
+  $('img-ph-txt').textContent=t('imgPh');
+  $('img-style-lbl').textContent=t('styleL');
+  $('img-prompt').placeholder=t('imgPh');
+  $('gen-lbl').textContent=t('genBtn');
+  $('dl-lbl').textContent=t('dlBtn');
+  buildStyles();
+  // pdf
+  $('pdf-title-lbl').textContent=t('pdfTitle');
+  $('pdf-doc-title-lbl').textContent=t('pdfTitleL');
+  $('pdf-tpl-lbl').textContent=t('pdfTplL');
+  $('pdf-content-lbl').textContent=t('pdfContentL');
+  $('pdf-ai-lbl').textContent=t('pdfAiBtn');
+  $('create-pdf-lbl').textContent=t('createPdfBtn');
+  buildTpls();
+  // settings
+  $('set-title').textContent=t('settings');
+  $('set-gender-lbl').textContent=t('genderL');
+  $('gc-f-name').textContent=t('female');$('gc-f-desc').textContent=t('femaleD');
+  $('gc-m-name').textContent=t('male');$('gc-m-desc').textContent=t('maleD');
+  $('set-speed-lbl').textContent=t('speedL');
+  $('set-slow').textContent=t('slow');$('set-fast').textContent=t('fast');
+  $('set-close-btn').textContent=t('close');
+}
+
+function $(id){return document.getElementById(id);}
+
+function buildStyles(){
+  const row=$('styles-row');row.innerHTML='';
+  const styles=t('styles')||[];
+  styles.forEach((s,i)=>{
+    const c=document.createElement('div');c.className='style-chip'+(i===0?' on':'');
+    c.textContent=s;c.onclick=()=>{document.querySelectorAll('.style-chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');selStyle=s;};
+    row.appendChild(c);
+  });
+  selStyle=styles[0]||'Realistic';
+}
+
+function buildTpls(){
+  const row=$('pdf-tpls');row.innerHTML='';
+  const tpls=t('tpls')||[];
+  tpls.forEach((s,i)=>{
+    const c=document.createElement('div');c.className='pdf-chip'+(i===0?' on':'');
+    c.textContent=s;c.onclick=()=>{document.querySelectorAll('.pdf-chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');selTpl=s;};
+    row.appendChild(c);
+  });
+  selTpl=tpls[0]||'General';
+}
+
+// ─── SCREENS ───
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ─── AUTH ───
+let emailFormOpen=false;
+function toggleEmailForm(){
+  emailFormOpen=!emailFormOpen;
+  $('auth-form-wrap').classList.toggle('show',emailFormOpen);
+}
+
+function switchTab(mode){
+  authMode=mode;
+  $('tab-login').classList.toggle('active',mode==='login');
+  $('tab-reg').classList.toggle('active',mode==='register');
+  $('btn-auth-submit').textContent=mode==='login'?t('login'):t('register');
+  $('field-name').style.display=mode==='register'?'block':'none';
+  $('auth-err').style.display='none';
+}
+
+function doEmailAuth(){
+  const email=$('inp-email').value.trim(),pass=$('inp-pass').value;
+  if(!email||!pass){showErr(t('errEmpty'));return;}
+  const btn=$('btn-auth-submit');btn.disabled=true;btn.textContent='...';
+  const p=authMode==='register'
+    ?auth.createUserWithEmailAndPassword(email,pass)
+    :auth.signInWithEmailAndPassword(email,pass);
+  p.then(()=>{applyLang();showScreen('home-screen');loadHistory();})
+   .catch(()=>{showErr(t('errAuth'));btn.disabled=false;btn.textContent=authMode==='login'?t('login'):t('register');});
+}
+
+function doGoogleAuth(){
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(()=>{applyLang();showScreen('home-screen');loadHistory();})
+    .catch(()=>showErr(t('errAuth')));
+}
+
+function showErr(m){const e=$('auth-err');e.textContent=m;e.style.display='block';}
+
+function doSignOut(){
+  stopVoice();auth.signOut().then(()=>{me=null;chatId=null;showScreen('lang-screen');});
+}
+
+// ─── CHAT ───
+function ensureChat(){if(!chatId)newChat();}
+function newChat(){
+  chatId='c_'+Date.now();
+  $('chat-msgs').innerHTML=`<div class="chat-empty" id="chat-empty">
+    <div class="orb-wrap"><div class="orb-ring"></div><div class="orb-ring2"></div>
+    <div class="orb-circle"><div class="orb-icon">✦</div></div></div>
+    <div class="empty-hey">${t('emptyHey')}</div>
+    <div class="empty-sub">${t('emptySub')}</div></div>`;
+  closeSidebar();
+}
+
+function loadHistory(){
+  if(!me)return;
+  const list=$('sb-list');list.innerHTML='';
+  db.ref('chats/'+me.uid).orderByChild('ts').limitToLast(25).once('value',snap=>{
+    const arr=[];snap.forEach(c=>arr.unshift({id:c.key,...c.val()}));
+    arr.forEach(item=>{
+      const btn=document.createElement('button');btn.className='sb-item';
+      btn.textContent=item.title||'Chat';btn.onclick=()=>loadChat(item.id);
+      list.appendChild(btn);
+    });
+  });
+}
+
+function loadChat(id){
+  chatId=id;$('chat-msgs').innerHTML='';
+  db.ref('chats/'+me.uid+'/'+id+'/msgs').orderByChild('ts').once('value',snap=>{
+    snap.forEach(m=>{const d=m.val();addMsg(d.text,d.role==='user'?'user':'apex',false);});
+    $('chat-msgs').scrollTop=9999;
+  });
+  closeSidebar();
+}
+
+function saveMsg(text,role){
+  if(!me||!chatId)return;
+  const ref=db.ref('chats/'+me.uid+'/'+chatId);
+  ref.child('msgs').push({text,role,ts:Date.now()});
+  if(role==='user'){ref.update({title:text.slice(0,40),ts:Date.now()});setTimeout(loadHistory,500);}
+}
+
+function addMsg(text,role,animate=true){
+  const box=$('chat-msgs');
+  const empty=$('chat-empty');if(empty)empty.remove();
+  const row=document.createElement('div');row.className=`msg-row ${role}`;
+  const av=document.createElement('div');av.className=`msg-av ${role==='apex'?'a':'u'}`;av.textContent=role==='apex'?'✦':'👤';
+  const b=document.createElement('div');b.className='msg-bub';b.textContent=text;
+  row.appendChild(av);row.appendChild(b);box.appendChild(row);
+  box.scrollTop=9999;
+}
+
+function showTyping(){
+  const box=$('chat-msgs');const empty=$('chat-empty');if(empty)empty.remove();
+  const row=document.createElement('div');row.className='msg-row apex';row.id='typing-row';
+  const av=document.createElement('div');av.className='msg-av a';av.textContent='✦';
+  const b=document.createElement('div');b.className='msg-bub';
+  b.innerHTML='<div class="typing-bub"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>';
+  row.appendChild(av);row.appendChild(b);box.appendChild(row);box.scrollTop=9999;
+}
+function hideTyping(){const r=$('typing-row');if(r)r.remove();}
+
+async function sendMsg(){
+  if(isSending)return;
+  if(!chatId)newChat();
+  const ta=$('chat-ta');const text=ta.value.trim();if(!text)return;
+  isSending=true;$('btn-send').disabled=true;
+  ta.value='';ta.style.height='auto';
+  addMsg(text,'user');saveMsg(text,'user');showTyping();
+  try{
+    const rep=await callApex(text);
+    const clean=rep.replace(/\*\*/g,'');
+    hideTyping();addMsg(clean,'apex');saveMsg(clean,'apex');
+  }catch(e){hideTyping();addMsg('⚠️ '+e.message,'apex');}
+  finally{isSending=false;$('btn-send').disabled=false;ta.focus();}
+}
+
+function chatEnter(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function openSidebar(){$('chat-sidebar').classList.add('open');$('sidebar-ov').classList.add('open');}
+function closeSidebar(){$('chat-sidebar').classList.remove('open');$('sidebar-ov').classList.remove('open');}
+
+// ─── GEMINI API ───
+const GEMINI_KEY='BURAYA_KEY_YAZ';
+async function callApex(userMsg,sysOverride){
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({system_instruction:{parts:[{text:sysOverride||SYS}]},contents:[{role:'user',parts:[{text:userMsg}]}]})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API Error');}
+  const data=await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+// ─── VOICE ───
+function initVoice(){
+  $('v-status').textContent=t('vReady');$('v-sub').textContent='';
+  $('v-orb').className='v-orb';$('v-orb-icon').textContent='🎙️';
+  $('v-waves').classList.remove('show');
+}
+
+function toggleListen(){
+  if(isSpeaking){synth.cancel();isSpeaking=false;initVoice();return;}
+  if(isListening){stopListen();return;}
+  startListen();
+}
+
+function startListen(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Bu tarayıcı ses tanımayı desteklemiyor.');return;}
+  recognition=new SR();recognition.lang=langCode();recognition.continuous=false;recognition.interimResults=false;
+  recognition.onstart=()=>{
+    isListening=true;$('v-orb').className='v-orb listening';$('v-orb-icon').textContent='👂';
+    $('v-status').textContent=t('vListening');$('v-waves').classList.add('show');
+  };
+  recognition.onresult=async e=>{
+    const tr=e.results[0][0].transcript;
+    $('v-sub').textContent='"'+tr+'"';isListening=false;
+    $('v-orb').className='v-orb';$('v-orb-icon').textContent='⏳';
+    $('v-status').textContent=t('vThinking');$('v-waves').classList.remove('show');
+    try{const rep=await callApex(tr);speak(rep.replace(/\*\*/g,''));}
+    catch(er){$('v-status').textContent='⚠️ Hata';}
+  };
+  recognition.onerror=()=>{isListening=false;initVoice();};
+  recognition.onend=()=>{if(isListening){isListening=false;}};
+  recognition.start();
+}
+function stopListen(){if(recognition)recognition.stop();isListening=false;initVoice();}
+
+function speak(text){
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=langCode();u.rate=voiceSpeed;u.pitch=vGender==='female'?1.18:0.82;
+  const voices=synth.getVoices();
+  const pref=voices.filter(v=>v.lang.startsWith(lang));
+  if(pref.length){
+    const filt=pref.filter(v=>vGender==='female'
+      ?/female|woman|girl|samantha|karen|victoria|tessa|moira|fiona|amelie|nora|ioana|paulina|alice|anna|helen/i.test(v.name)
+      :/male|man|daniel|alex|tom|lee|rishi|jorge|diego|enrique|luca|giovanni|aaron/i.test(v.name));
+    u.voice=filt[0]||pref[0];
+  }
+  isSpeaking=true;
+  $('v-orb').className='v-orb speaking';
+  $('v-orb-icon').textContent=vGender==='female'?'👩':'👨';
+  $('v-status').textContent=t('vSpeaking');
+  $('v-sub').textContent=text.slice(0,80)+(text.length>80?'...':'');
+  $('v-waves').classList.add('show');
+  u.onend=()=>{isSpeaking=false;initVoice();};
+  u.onerror=()=>{isSpeaking=false;initVoice();};
+  synth.speak(u);
+}
+
+function stopVoice(){
+  if(recognition)recognition.stop();synth.cancel();
+  isListening=false;isSpeaking=false;initVoice();
+}
+
+// Quick voice from chat screen mic button
+function quickVoice(){showScreen('voice-screen');initVoice();startListen();}
+
+function langCode(){
+  return{tr:'tr-TR',en:'en-US',de:'de-DE',fr:'fr-FR',es:'es-ES',it:'it-IT',pt:'pt-BR',ru:'ru-RU',ar:'ar-SA',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',hi:'hi-IN',nl:'nl-NL',pl:'pl-PL',sv:'sv-SE',uk:'uk-UA',az:'az-AZ'}[lang]||'en-US';
+}
+
+// ─── IMAGE GENERATION (Pollinations.ai FLUX) ───
+async function genImage(){
+  if(isGenerating)return;
+  const prompt=$('img-prompt').value.trim();if(!prompt)return;
+  isGenerating=true;$('btn-gen').disabled=true;$('btn-dl').style.display='none';
+  const wrap=$('img-result');
+  wrap.innerHTML=`<div class="img-load-overlay"><div class="img-spinner"></div><div class="img-load-txt">${t('pdfAiGen')}</div></div>`;
+  try{
+    const styleMap={'Gerçekçi':'realistic photorealistic high detail','Anime':'anime style manga art','Dijital Sanat':'digital art concept art','Yağlı Boya':'oil painting fine art','Siyah-Beyaz':'black and white photography','Fotoğraf':'professional photography DSLR','3D Render':'3D render CGI octane render','Suluboya':'watercolor painting','Realistic':'realistic photorealistic high detail','Anime':'anime style','Digital Art':'digital art concept art','Oil Paint':'oil painting fine art','Black & White':'black and white photography','Photo':'professional photography','3D Render':'3D render CGI','Watercolor':'watercolor painting'};
+    const styleStr=styleMap[selStyle]||selStyle;
+    const seed=Math.floor(Math.random()*99999);
+    const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt+', '+styleStr+', masterpiece, best quality')}?width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`;
+    const img=new Image();
+    img.onload=()=>{wrap.innerHTML='';img.style.cssText='width:100%;display:block;border-radius:20px';wrap.appendChild(img);curImgUrl=url;$('btn-dl').style.display='flex';isGenerating=false;$('btn-gen').disabled=false;};
+    img.onerror=()=>{wrap.innerHTML=`<div class="img-placeholder"><div class="img-ph-icon">❌</div><div class="img-ph-text">${t('errImg')}</div></div>`;isGenerating=false;$('btn-gen').disabled=false;};
+    img.src=url;
+  }catch(e){wrap.innerHTML=`<div class="img-placeholder"><div class="img-ph-icon">❌</div><div class="img-ph-text">${t('errImg')}</div></div>`;isGenerating=false;$('btn-gen').disabled=false;}
+}
+
+function dlImage(){
+  if(!curImgUrl)return;
+  const a=document.createElement('a');a.href=curImgUrl;a.download='apex-'+Date.now()+'.jpg';a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ─── PDF ───
+async function aiPdfContent(){
+  const title=$('pdf-doc-title').value.trim();if(!title){alert(t('errEmpty'));return;}
+  const btn=$('pdf-ai-btn');btn.innerHTML='<span>⏳</span><span>'+t('pdfAiGen')+'</span>';
+  try{
+    const sys='Sen profesyonel bir doküman yazarısın. Kullanıcının verdiği başlık ve şablona göre düzgün, akıcı ve profesyonel içerik yaz. Markdown veya yıldız kullanma.';
+    const rep=await callApex(`Başlık: "${title}"\nŞablon: ${selTpl}\nDil: ${lang}\nBu doküman için içerik yaz.`,sys);
+    $('pdf-content').value=rep.replace(/\*\*/g,'');
+  }catch(e){alert(t('errPdf'));}
+  btn.innerHTML=`<span>✨</span><span>${t('pdfAiBtn')}</span>`;
+}
+
+async function createPDF(){
+  const title=$('pdf-doc-title').value.trim()||'APEX Document';
+  const content=$('pdf-content').value.trim();
+  if(!content){alert(t('errEmpty'));return;}
+  const btn=$('btn-create-pdf');btn.disabled=true;
+  const prog=$('pdf-prog');prog.classList.add('show');
+  const bar=$('pdf-prog-bar');const ptxt=$('pdf-prog-txt');
+  ptxt.textContent=t('pdfProgress');
+  let pct=0;const iv=setInterval(()=>{pct=Math.min(pct+Math.random()*15,90);bar.style.width=pct+'%';},180);
+  const now=new Date().toLocaleDateString(lang,{year:'numeric',month:'long',day:'numeric'});
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<style>body{font-family:Arial,sans-serif;margin:0;padding:48px;color:#111;font-size:14px;line-height:1.8}
+.hd{border-bottom:3px solid #0099cc;padding-bottom:18px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end}
+.ht{font-size:26px;font-weight:700;color:#0099cc}.meta{font-size:11px;color:#888;text-align:right}
+.ct{white-space:pre-wrap;word-break:break-word}
+.ft{margin-top:60px;padding-top:14px;border-top:1px solid #eee;font-size:10px;color:#aaa;display:flex;justify-content:space-between}
+</style></head><body>
+<div class="hd"><div><div class="ht">${title}</div><div style="font-size:12px;color:#888;margin-top:3px">${selTpl}</div></div>
+<div class="meta"><strong>APEX AI</strong>${now}</div></div>
+<div class="ct">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+<div class="ft"><span>APEX AI — İbrahim Halil Pehlivan</span><span>${now}</span></div>
+</body></html>`;
+  clearInterval(iv);bar.style.width='100%';ptxt.textContent='✓';
+  const w=window.open('','_blank');w.document.write(html);w.document.close();w.focus();
+  setTimeout(()=>w.print(),500);
+  setTimeout(()=>{prog.classList.remove('show');bar.style.width='0%';btn.disabled=false;},1500);
+}
+
+// ─── SETTINGS ───
+function openSettings(){$('settings-modal').classList.add('open');}
+function closeSettings(e){if(!e||e.target===$('settings-modal'))$('settings-modal').classList.remove('open');}
+function setGender(g){
+  vGender=g;
+  $('gc-female').classList.toggle('on',g==='female');
+  $('gc-male').classList.toggle('on',g==='male');
+  synth.cancel();
+  const u=new SpeechSynthesisUtterance(lang==='tr'?'Merhaba, ben APEX.':'Hello, I am APEX.');
+  u.lang=langCode();u.pitch=g==='female'?1.18:0.82;u.rate=voiceSpeed;
+  const vs=synth.getVoices();const pref=vs.filter(v=>v.lang.startsWith(lang));
+  if(pref.length){const f=pref.filter(v=>g==='female'?/female|woman|samantha|karen|victoria|tessa/i.test(v.name):/male|man|daniel|alex|tom/i.test(v.name));u.voice=f[0]||pref[0];}
+  synth.speak(u);
+}
+</script>
+</body>
+</html>
